@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write  # 必须添加的权限
+      pages: write      # 新增必要权限
+      id-token: write   # 新增必要权限
 
     steps:
       - uses: actions/checkout@v3
