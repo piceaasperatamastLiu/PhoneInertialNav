@@ -11,6 +11,8 @@ import {
 import { CloudDownload, PlayArrow, Stop } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
+import { Collector, type SensorData } from './collector';
+
 const theme = createTheme({
   palette: {
     primary: {
@@ -37,14 +39,33 @@ export default function () {
   const [hasResult, setHasResult] = useState(false);
   const [timer, setTimer] = useState(0);
 
+  const collector = new Collector();
+  const [sensorData, setSensorData] = useState<SensorData[]>([]);
+
+  useEffect(() => {
+    collector.init();
+
+    return () => {
+      if (collector) {
+        collector.stop();
+        setSensorData(collector.data());
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (isCapturing) {
       const interval = setInterval(() => {
         setCaptureTime(prev => prev + 1);
       }, 1000);
       setTimer(interval);
+
+      collector.start();
     } else {
       clearInterval(timer);
+
+      collector.stop();
+      setSensorData(collector.data());
     }
 
     return () => clearInterval(timer);
@@ -63,9 +84,9 @@ export default function () {
 
   const handleDownload = () => {
     const element = document.createElement('a');
-    const file = new Blob(['模拟捕获数据 - 持续时间: ' + captureTime + '秒'], { type: 'text/plain' });
+    const file = new Blob([JSON.stringify(sensorData)], { type: 'application/json' });
     element.href = URL.createObjectURL(file);
-    element.download = 'capture-result.txt';
+    element.download = 'capture-result.json';
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
