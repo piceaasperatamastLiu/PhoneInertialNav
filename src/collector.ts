@@ -31,11 +31,11 @@ export class Collector {
             }
 
             if ('Accelerometer' in window && 'Gyroscope' in window) {
-                this.sensors.accelerometer = new Accelerometer({ frequency: 60 });
-                this.sensors.gyroscope = new Gyroscope({ frequency: 60 });
+                this.sensors.accelerometer = new (window as any).Accelerometer({ frequency: 60 });
+                this.sensors.gyroscope = new (window as any).Gyroscope({ frequency: 60 });
 
-                this.sensors.accelerometer.addEventListener('reading', this.updateData.bind(this));
-                this.sensors.gyroscope.addEventListener('reading', this.updateData.bind(this));
+                this.sensors.accelerometer?.addEventListener('reading', this.updateData.bind(this));
+                this.sensors.gyroscope?.addEventListener('reading', this.updateData.bind(this));
             } else {
                 console.warn('当前浏览器不支持 Accelerometer 或 Gyroscope');
                 return false;
