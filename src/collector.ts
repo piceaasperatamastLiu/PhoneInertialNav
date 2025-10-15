@@ -26,6 +26,7 @@ export class Collector {
             if (navigator.permissions) {
                 await navigator.permissions.query({ name: 'accelerometer' } as any);
                 await navigator.permissions.query({ name: 'gyroscope' } as any);
+                await navigator.permissions.query({ name: 'magnetometer' } as any);
             }
 
             if (!('LinearAccelerationSensor' in window) ||
@@ -40,7 +41,6 @@ export class Collector {
             this.sensors.magnetometer = new Magnetometer({ frequency: 60 });
 
             this.sensors.accelerometer.addEventListener('reading', this.updateData.bind(this));
-            this.sensors.gyroscope.addEventListener('reading', this.updateData.bind(this));
 
             if (this.sensors.accelerometer &&
                 this.sensors.gyroscope &&
