@@ -1,14 +1,8 @@
+// src/collector.ts
+
 export type SensorData = {
-    acceleration: {
-        x: number;
-        y: number;
-        z: number;
-    };
-    rotation: {
-        x: number;
-        y: number;
-        z: number;
-    };
+    acceleration: { x: number; y: number; z: number };
+    rotation: { x: number; y: number; z: number };
     timestamp: number;
 };
 
@@ -17,34 +11,36 @@ type IMSensors = {
     gyroscope?: Gyroscope;
 };
 
+export type InitStatus = 'success' | 'not-supported' | 'error';
+
 export class Collector {
     constructor() {
         this.sensors = {};
         this.sensorData = [];
     }
 
-    async init(): Promise<boolean> {
+    async init(): Promise<InitStatus> {
         try {
             if (navigator.permissions) {
                 await navigator.permissions.query({ name: 'accelerometer' } as any);
                 await navigator.permissions.query({ name: 'gyroscope' } as any);
             }
 
-            if ('Accelerometer' in window && 'Gyroscope' in window) {
-                this.sensors.accelerometer = new (window as any).Accelerometer({ frequency: 60 });
-                this.sensors.gyroscope = new (window as any).Gyroscope({ frequency: 60 });
-
-                this.sensors.accelerometer?.addEventListener('reading', this.updateData.bind(this));
-                this.sensors.gyroscope?.addEventListener('reading', this.updateData.bind(this));
-            } else {
+            if (!('Accelerometer' in window) || !('Gyroscope' in window)) {
                 console.warn('当前浏览器不支持 Accelerometer 或 Gyroscope');
-                return false;
+                return 'not-supported';
             }
 
-            return true;
+            this.sensors.accelerometer = new Accelerometer({ frequency: 60 });
+            this.sensors.gyroscope = new Gyroscope({ frequency: 60 });
+
+            this.sensors.accelerometer.addEventListener('reading', this.updateData.bind(this));
+            this.sensors.gyroscope.addEventListener('reading', this.updateData.bind(this));
+
+            return 'success';
         } catch (error) {
             console.error('初始化失败:', error);
-            return false;
+            return 'error';
         }
     }
 
@@ -72,8 +68,6 @@ export class Collector {
     }
 
     public start(): void {
-        this.sensorData = [];
-
         const acc = this.sensors.accelerometer;
         const gyro = this.sensors.gyroscope;
 
@@ -81,7 +75,7 @@ export class Collector {
             acc.start();
             gyro.start();
         } else {
-            throw Error("传感器未初始化，无法启动");
+            throw new Error('传感器未初始化，无法启动');
         }
     }
 
@@ -92,8 +86,6 @@ export class Collector {
         if (acc && gyro) {
             acc.stop();
             gyro.stop();
-        } else {
-            throw Error('传感器未初始化，无法停止');
         }
     }
 

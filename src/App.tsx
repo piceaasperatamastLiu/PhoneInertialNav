@@ -1,3 +1,5 @@
+// src/App.tsx
+
 import { useState, useEffect } from 'react';
 import {
   Button,
@@ -11,71 +13,75 @@ import {
 import { CloudDownload, PlayArrow, Stop } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-import { Collector, type SensorData } from './collector';
+import { Collector, type SensorData, type InitStatus } from './collector';
 
 const theme = createTheme({
   palette: {
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
+    primary: { main: '#1976d2' },
+    secondary: { main: '#dc004e' },
   },
-  typography: {
-    fontFamily: 'Roboto, sans-serif',
-  },
+  typography: { fontFamily: 'Roboto, sans-serif' },
 });
 
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-};
+}
 
-export default function () {
+export default function SensorCapturePage() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [captureTime, setCaptureTime] = useState(0);
   const [hasResult, setHasResult] = useState(false);
-  const [timer, setTimer] = useState(0);
-
-  const collector = new Collector();
   const [isSensorInitialized, setSensorInitialized] = useState(false);
   const [sensorData, setSensorData] = useState<SensorData[]>([]);
+  const [initStatus, setInitStatus] = useState<InitStatus | null>(null);
+
+  const collector = new Collector();
 
   useEffect(() => {
-    collector.init().then(success => setSensorInitialized(success));
+    // 初始化传感器
+    collector
+      .init()
+      .then((status) => {
+        setInitStatus(status);
+        setSensorInitialized(status === 'success');
+      })
+      .catch((err) => {
+        console.error('初始化异常:', err);
+        setInitStatus('error');
+      });
 
     return () => {
-      if (collector && isSensorInitialized) {
+      if (isSensorInitialized) {
         collector.stop();
         setSensorData(collector.data());
       }
-    }
+    };
   }, []);
 
   useEffect(() => {
+    if (!isCapturing || !isSensorInitialized) return;
+
+    const interval = setInterval(() => {
+      setCaptureTime((prev) => prev + 1);
+    }, 1000);
+
+    // 启动传感器
     try {
-      if (isCapturing && isSensorInitialized) {
-        const interval = setInterval(() => {
-          setCaptureTime(prev => prev + 1);
-        }, 1000);
-        setTimer(interval);
+      collector.start();
+    } catch (error) {
+      alert('启动传感器失败：' + error);
+    }
 
-        collector.start();
-      }
-      if (!isCapturing && isSensorInitialized) {
-        clearInterval(timer);
-
+    return () => {
+      clearInterval(interval);
+      if (isSensorInitialized) {
         collector.stop();
         setSensorData(collector.data());
       }
-    } catch (error) {
-      alert(error);
-    }
-
-    return () => clearInterval(timer);
-  }, [isCapturing]);
+    };
+  }, [isCapturing, isSensorInitialized]);
 
   const handleCaptureToggle = () => {
     if (isCapturing) {
@@ -89,13 +95,17 @@ export default function () {
   };
 
   const handleDownload = () => {
-    const element = document.createElement('a');
-    const file = new Blob([JSON.stringify(sensorData)], { type: 'application/json' });
-    element.href = URL.createObjectURL(file);
-    element.download = 'capture-result.json';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    const blob = new Blob([JSON.stringify(sensorData, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sensor-data-${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -109,103 +119,67 @@ export default function () {
           alignItems: 'center',
           justifyContent: 'center',
           padding: 2,
-          textAlign: 'center'
+          textAlign: 'center',
         }}
       >
-        {/* 标题 */}
         <Typography variant="h4" component="h1" gutterBottom>
-          数据捕获应用
+          传感器数据捕获
         </Typography>
 
-        {/* 状态卡片 - 完全居中 */}
-        <Card sx={{
-          width: '100%',
-          maxWidth: 400,
-          margin: '16px 0',
-          textAlign: 'center',
-        }}>
+        <Card sx={{ width: '100%', maxWidth: 400, margin: '16px 0' }}>
           <CardContent>
             <Typography variant="h6" gutterBottom>
-              当前状态
+              状态
             </Typography>
-            <Box sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              mb: 2
-            }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+              {initStatus === 'not-supported' && (
+                <Typography color="error">❌ 您的浏览器不支持传感器</Typography>
+              )}
+              {initStatus === 'error' && (
+                <Typography color="error">❌ 传感器初始化失败</Typography>
+              )}
               {isCapturing ? (
                 <>
                   <CircularProgress color="primary" size={24} sx={{ mr: 1 }} />
-                  <Typography variant="body1" color="primary">
-                    捕获中...
-                  </Typography>
+                  <Typography color="primary">🔴 捕获中...</Typography>
                 </>
               ) : (
-                <Typography variant="body1" color={hasResult ? 'text.secondary' : 'text.primary'}>
-                  {hasResult ? '捕获已完成' : '准备就绪'}
+                <Typography color={hasResult ? 'text.secondary' : 'text.primary'}>
+                  ⏹️ {hasResult ? '✅ 已完成' : '⏳ 准备就绪'}
                 </Typography>
               )}
             </Box>
 
-            {isCapturing && (
-              <Typography variant="h5">
-                {formatTime(captureTime)}
-              </Typography>
-            )}
+            {isCapturing && <Typography variant="h5">{formatTime(captureTime)}</Typography>}
           </CardContent>
         </Card>
 
-        {/* 主按钮 - 完全居中 */}
-        <Box sx={{
-          width: '100%',
-          maxWidth: 400,
-          margin: '16px 0',
-          display: 'flex',
-          justifyContent: 'center'
-        }}>
+        <Box sx={{ width: '100%', maxWidth: 400, margin: '16px 0', display: 'flex', justifyContent: 'center' }}>
           <Button
             variant="contained"
             color={isCapturing ? 'secondary' : 'primary'}
             size="large"
             startIcon={isCapturing ? <Stop /> : <PlayArrow />}
             onClick={handleCaptureToggle}
-            sx={{
-              height: 80,
-              width: '100%',
-              fontSize: '1.5rem',
-              borderRadius: 10,
-              boxShadow: 3,
-            }}
+            sx={{ height: 60, width: '100%', fontSize: '1.2rem', borderRadius: 3 }}
           >
             {isCapturing ? '停止捕获' : '开始捕获'}
           </Button>
         </Box>
 
-        {/* 结果卡片 - 完全居中 */}
         {hasResult && (
-          <Card sx={{
-            width: '100%',
-            maxWidth: 400,
-            margin: '16px 0',
-            textAlign: 'center'
-          }}>
+          <Card sx={{ width: '100%', maxWidth: 400, margin: '16px 0' }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                捕获结果
-              </Typography>
-              <Typography variant="body1" gutterBottom>
-                捕获持续时间: {formatTime(captureTime)}
-              </Typography>
-              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <Typography variant="h6">捕获完成</Typography>
+              <Typography>时长: {formatTime(captureTime)}</Typography>
+              <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
                 <Button
                   variant="contained"
                   color="primary"
                   startIcon={<CloudDownload />}
                   onClick={handleDownload}
-                  sx={{ mt: 2 }}
                 >
-                  下载结果
+                  📥 下载数据
                 </Button>
               </Box>
             </CardContent>
@@ -214,4 +188,4 @@ export default function () {
       </Container>
     </ThemeProvider>
   );
-};
+}
