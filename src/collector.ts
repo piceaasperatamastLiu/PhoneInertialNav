@@ -12,27 +12,6 @@ export type SensorData = {
     timestamp: number;
 };
 
-// Minimal type declarations for Accelerometer and Gyroscope
-declare class Accelerometer {
-    x: number;
-    y: number;
-    z: number;
-    constructor(options?: { frequency?: number });
-    start(): void;
-    stop(): void;
-    addEventListener(type: string, listener: (event: any) => void): void;
-}
-
-declare class Gyroscope {
-    x: number;
-    y: number;
-    z: number;
-    constructor(options?: { frequency?: number });
-    start(): void;
-    stop(): void;
-    addEventListener(type: string, listener: (event: any) => void): void;
-}
-
 type IMSensors = {
     accelerometer?: Accelerometer;
     gyroscope?: Gyroscope;
@@ -76,14 +55,14 @@ export class Collector {
         if (acc && gyro) {
             const data: SensorData = {
                 acceleration: {
-                    x: acc.x,
-                    y: acc.y,
-                    z: acc.z,
+                    x: acc.x ?? 0,
+                    y: acc.y ?? 0,
+                    z: acc.z ?? 0,
                 },
                 rotation: {
-                    x: gyro.x,
-                    y: gyro.y,
-                    z: gyro.z,
+                    x: gyro.x ?? 0,
+                    y: gyro.y ?? 0,
+                    z: gyro.z ?? 0,
                 },
                 timestamp: Date.now(),
             };

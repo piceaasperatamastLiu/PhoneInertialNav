@@ -40,14 +40,14 @@ export default function () {
   const [timer, setTimer] = useState(0);
 
   const collector = new Collector();
+  const [isSensorInitialized, setSensorInitialized] = useState(false);
   const [sensorData, setSensorData] = useState<SensorData[]>([]);
 
   useEffect(() => {
-    let success = false;
-    collector.init().then(result => success = result);
+    collector.init().then(success => setSensorInitialized(success));
 
     return () => {
-      if (collector && success) {
+      if (collector && isSensorInitialized) {
         collector.stop();
         setSensorData(collector.data());
       }
@@ -56,14 +56,15 @@ export default function () {
 
   useEffect(() => {
     try {
-      if (isCapturing) {
+      if (isCapturing && isSensorInitialized) {
         const interval = setInterval(() => {
           setCaptureTime(prev => prev + 1);
         }, 1000);
         setTimer(interval);
 
         collector.start();
-      } else {
+      }
+      if (!isCapturing && isSensorInitialized) {
         clearInterval(timer);
 
         collector.stop();
