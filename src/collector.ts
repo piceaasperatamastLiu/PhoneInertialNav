@@ -4,7 +4,6 @@ export type SensorData = {
     acceleration: { x: number; y: number; z: number };
     rotation: { x: number; y: number; z: number };
     magnetometer: { x: number; y: number; z: number };
-    orientation: { x: number; y: number; z: number }
     timestamp: number;
 };
 
@@ -12,7 +11,6 @@ type IMSensors = {
     accelerometer?: LinearAccelerationSensor;
     gyroscope?: Gyroscope;
     magnetometer?: Magnetometer;
-    orientation?: AbsoluteOrientationSensor;
 };
 
 export type InitStatus = 'success' | 'not-supported' | 'error';
@@ -33,8 +31,7 @@ export class Collector {
 
             if (!('LinearAccelerationSensor' in window) ||
                 !('Gyroscope' in window) ||
-                !('Magnetometer' in window) ||
-                !('AbsoluteOrientationSensor' in window)) {
+                !('Magnetometer' in window)) {
                 console.warn('当前浏览器不支持 Accelerometer 或 Gyroscope');
                 return 'not-supported';
             }
@@ -42,14 +39,12 @@ export class Collector {
             this.sensors.accelerometer = new LinearAccelerationSensor({ frequency: 60 });
             this.sensors.gyroscope = new Gyroscope({ frequency: 60 });
             this.sensors.magnetometer = new Magnetometer({ frequency: 60 });
-            this.sensors.orientation = new AbsoluteOrientationSensor({ frequency: 60 });
 
             this.sensors.accelerometer.addEventListener('reading', this.updateData.bind(this));
 
             if (this.sensors.accelerometer &&
                 this.sensors.gyroscope &&
-                this.sensors.magnetometer &&
-                this.sensors.orientation) {
+                this.sensors.magnetometer) {
                 return 'success';
             } else {
                 return 'error';
@@ -64,9 +59,8 @@ export class Collector {
         const acc = this.sensors.accelerometer;
         const gyro = this.sensors.gyroscope;
         const mag = this.sensors.magnetometer;
-        const ori = this.sensors.orientation;
 
-        if (acc && gyro && mag && ori) {
+        if (acc && gyro && mag) {
             const data: SensorData = {
                 acceleration: {
                     x: acc.x ?? 0,
@@ -83,11 +77,6 @@ export class Collector {
                     y: mag.y ?? 0,
                     z: mag.z ?? 0
                 },
-                orientation: {
-                    x: ori.x ?? 0,
-                    y: ori.y ?? 0,
-                    z: ori.z ?? 0
-                },
                 timestamp: Date.now(),
             };
 
@@ -99,13 +88,11 @@ export class Collector {
         const acc = this.sensors.accelerometer;
         const gyro = this.sensors.gyroscope;
         const mag = this.sensors.magnetometer;
-        const ori = this.sensors.orientation;
 
-        if (acc && gyro && mag && ori) {
+        if (acc && gyro && mag) {
             acc.start();
             gyro.start();
             mag.start();
-            ori.start();
         } else {
             throw new Error('传感器未初始化，无法启动');
         }
@@ -115,13 +102,11 @@ export class Collector {
         const acc = this.sensors.accelerometer;
         const gyro = this.sensors.gyroscope;
         const mag = this.sensors.magnetometer;
-        const ori = this.sensors.orientation;
 
-        if (acc && gyro && mag && ori) {
+        if (acc && gyro && mag) {
             acc.stop();
             gyro.stop();
             mag.stop();
-            ori.stop();
         }
     }
 
