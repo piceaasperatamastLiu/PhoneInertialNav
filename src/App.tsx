@@ -1,5 +1,3 @@
-// src/App.tsx
-
 import { useState, useEffect } from 'react';
 import {
   Button,
@@ -36,32 +34,45 @@ export default function SensorCapturePage() {
   const [isSensorInitialized, setSensorInitialized] = useState(false);
   const [sensorData, setSensorData] = useState<SensorData[]>([]);
   const [initStatus, setInitStatus] = useState<InitStatus | null>(null);
+  const [collector, setCollector] = useState<Collector | null>(null);
 
-  const collector = new Collector();
+  // 初始化传感器（仅在点击"开始捕获"时调用）
+  const initializeSensor = async () => {
+    try {
+      const newCollector = new Collector();
+      const status = await newCollector.init();
+
+      setInitStatus(status);
+      setSensorInitialized(status === 'success');
+      setCollector(newCollector);
+
+      return status === 'success';
+    } catch (err) {
+      console.error('初始化异常:', err);
+      setInitStatus('error');
+      return false;
+    }
+  };
+
+  // 清理传感器实例
+  const cleanupSensor = () => {
+    if (collector) {
+      collector.stop();
+      setSensorData(collector.data());
+      setCollector(null); // 清除当前实例
+    }
+    setSensorInitialized(false);
+  };
 
   useEffect(() => {
-    // 初始化传感器
-    collector
-      .init()
-      .then((status) => {
-        setInitStatus(status);
-        setSensorInitialized(status === 'success');
-      })
-      .catch((err) => {
-        console.error('初始化异常:', err);
-        setInitStatus('error');
-      });
-
     return () => {
-      if (isSensorInitialized) {
-        collector.stop();
-        setSensorData(collector.data());
-      }
+      // 组件卸载时清理
+      cleanupSensor();
     };
   }, []);
 
   useEffect(() => {
-    if (!isCapturing || !isSensorInitialized) return;
+    if (!isCapturing || !isSensorInitialized || !collector) return;
 
     const interval = setInterval(() => {
       setCaptureTime((prev) => prev + 1);
@@ -72,25 +83,32 @@ export default function SensorCapturePage() {
       collector.start();
     } catch (error) {
       alert('启动传感器失败：' + error);
+      setIsCapturing(false);
     }
 
     return () => {
       clearInterval(interval);
-      if (isSensorInitialized) {
-        collector.stop();
-        setSensorData(collector.data());
-      }
+      cleanupSensor();
     };
-  }, [isCapturing, isSensorInitialized]);
+  }, [isCapturing, isSensorInitialized, collector]);
 
-  const handleCaptureToggle = () => {
+  const handleCaptureToggle = async () => {
     if (isCapturing) {
+      // 停止捕获
       setIsCapturing(false);
       setHasResult(true);
+      cleanupSensor();
     } else {
+      // 开始捕获
       setIsCapturing(true);
       setCaptureTime(0);
       setHasResult(false);
+
+      const success = await initializeSensor();
+      if (!success) {
+        setIsCapturing(false);
+        alert('传感器初始化失败，请检查浏览器支持或权限');
+      }
     }
   };
 
@@ -122,6 +140,7 @@ export default function SensorCapturePage() {
           textAlign: 'center',
         }}
       >
+        {/* 标题和UI部分保持不变 */}
         <Typography variant="h4" component="h1" gutterBottom>
           传感器数据捕获
         </Typography>
@@ -161,6 +180,7 @@ export default function SensorCapturePage() {
             size="large"
             startIcon={isCapturing ? <Stop /> : <PlayArrow />}
             onClick={handleCaptureToggle}
+            disabled={isCapturing && !isSensorInitialized} // 初始化过程中禁用按钮
             sx={{ height: 60, width: '100%', fontSize: '1.2rem', borderRadius: 3 }}
           >
             {isCapturing ? '停止捕获' : '开始捕获'}

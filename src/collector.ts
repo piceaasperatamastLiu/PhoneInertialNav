@@ -37,7 +37,11 @@ export class Collector {
             this.sensors.accelerometer.addEventListener('reading', this.updateData.bind(this));
             this.sensors.gyroscope.addEventListener('reading', this.updateData.bind(this));
 
-            return 'success';
+            if (this.sensors.accelerometer && this.sensors.gyroscope) {
+                return 'success';
+            } else {
+                return 'error';
+            }
         } catch (error) {
             console.error('初始化失败:', error);
             return 'error';
