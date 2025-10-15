@@ -5,6 +5,13 @@ declare class Accelerometer extends Sensor {
     constructor(options?: SensorOptions);
 }
 
+declare class LinearAccelerationSensor extends Sensor {
+    x: number | null;
+    y: number | null;
+    z: number | null;
+    constructor(options?: SensorOptions);
+}
+
 declare class Gyroscope extends Sensor {
     x: number | null;
     y: number | null;

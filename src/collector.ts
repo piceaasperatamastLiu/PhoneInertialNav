@@ -31,7 +31,7 @@ export class Collector {
                 return 'not-supported';
             }
 
-            this.sensors.accelerometer = new Accelerometer({ frequency: 60 });
+            this.sensors.accelerometer = new LinearAccelerationSensor({ frequency: 60 });
             this.sensors.gyroscope = new Gyroscope({ frequency: 60 });
 
             this.sensors.accelerometer.addEventListener('reading', this.updateData.bind(this));
