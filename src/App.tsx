@@ -43,10 +43,11 @@ export default function () {
   const [sensorData, setSensorData] = useState<SensorData[]>([]);
 
   useEffect(() => {
-    collector.init();
+    let success = false;
+    collector.init().then(result => success = result);
 
     return () => {
-      if (collector) {
+      if (collector && success) {
         collector.stop();
         setSensorData(collector.data());
       }
@@ -54,18 +55,22 @@ export default function () {
   }, []);
 
   useEffect(() => {
-    if (isCapturing) {
-      const interval = setInterval(() => {
-        setCaptureTime(prev => prev + 1);
-      }, 1000);
-      setTimer(interval);
+    try {
+      if (isCapturing) {
+        const interval = setInterval(() => {
+          setCaptureTime(prev => prev + 1);
+        }, 1000);
+        setTimer(interval);
 
-      collector.start();
-    } else {
-      clearInterval(timer);
+        collector.start();
+      } else {
+        clearInterval(timer);
 
-      collector.stop();
-      setSensorData(collector.data());
+        collector.stop();
+        setSensorData(collector.data());
+      }
+    } catch (error) {
+      alert(error);
     }
 
     return () => clearInterval(timer);

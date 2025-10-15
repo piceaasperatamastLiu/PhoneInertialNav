@@ -59,6 +59,7 @@ export class Collector {
                 this.sensors.gyroscope.addEventListener('reading', this.updateData.bind(this));
             } else {
                 console.warn('当前浏览器不支持 Accelerometer 或 Gyroscope');
+                return false;
             }
 
             return true;
@@ -101,7 +102,7 @@ export class Collector {
             acc.start();
             gyro.start();
         } else {
-            console.warn('传感器未初始化，无法启动');
+            throw Error("传感器未初始化，无法启动");
         }
     }
 
@@ -113,7 +114,7 @@ export class Collector {
             acc.stop();
             gyro.stop();
         } else {
-            console.warn('传感器未初始化，无法停止');
+            throw Error('传感器未初始化，无法停止');
         }
     }
 
