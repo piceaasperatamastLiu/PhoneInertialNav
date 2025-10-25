@@ -59,7 +59,7 @@ export class Collector {
         }
     }
 
-    private updateData(): void {
+    private updateData(event: Event): void {
         const acc = this.sensors.accelerometer;
         const gyro = this.sensors.gyroscope;
 
@@ -75,7 +75,7 @@ export class Collector {
                     y: gyro.y ?? 0,
                     z: gyro.z ?? 0,
                 },
-                timestamp: Date.now(),
+                timestamp: event.timeStamp,
             };
 
             this.sensorData.push(data);

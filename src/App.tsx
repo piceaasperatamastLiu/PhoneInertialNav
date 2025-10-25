@@ -11,6 +11,7 @@ import {
 import { CloudDownload, PlayArrow, Stop } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
+import LoggerPanel from './LoggerPanel';
 import { Collector, type SensorData, type InitStatus } from './collector';
 
 const theme = createTheme({
@@ -36,7 +37,6 @@ export default function SensorCapturePage() {
   const [initStatus, setInitStatus] = useState<InitStatus | null>(null);
   const [collector, setCollector] = useState<Collector | null>(null);
 
-  // 初始化传感器（仅在点击"开始捕获"时调用）
   const initializeSensor = async () => {
     try {
       const newCollector = new Collector();
@@ -54,19 +54,17 @@ export default function SensorCapturePage() {
     }
   };
 
-  // 清理传感器实例
   const cleanupSensor = () => {
     if (collector) {
       collector.stop();
       setSensorData(collector.data());
-      setCollector(null); // 清除当前实例
+      setCollector(null);
     }
     setSensorInitialized(false);
   };
 
   useEffect(() => {
     return () => {
-      // 组件卸载时清理
       cleanupSensor();
     };
   }, []);
@@ -78,7 +76,6 @@ export default function SensorCapturePage() {
       setCaptureTime((prev) => prev + 1);
     }, 1000);
 
-    // 启动传感器
     try {
       collector.start();
     } catch (error) {
@@ -94,12 +91,10 @@ export default function SensorCapturePage() {
 
   const handleCaptureToggle = async () => {
     if (isCapturing) {
-      // 停止捕获
       setIsCapturing(false);
       setHasResult(true);
       cleanupSensor();
     } else {
-      // 开始捕获
       setIsCapturing(true);
       setCaptureTime(0);
       setHasResult(false);
@@ -135,12 +130,12 @@ export default function SensorCapturePage() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
+          justifyContent: 'flex-start',
           padding: 2,
           textAlign: 'center',
+          overflow: 'auto',
         }}
       >
-        {/* 标题和UI部分保持不变 */}
         <Typography variant="h4" component="h1" gutterBottom>
           传感器数据捕获
         </Typography>
@@ -180,7 +175,7 @@ export default function SensorCapturePage() {
             size="large"
             startIcon={isCapturing ? <Stop /> : <PlayArrow />}
             onClick={handleCaptureToggle}
-            disabled={isCapturing && !isSensorInitialized} // 初始化过程中禁用按钮
+            disabled={isCapturing && !isSensorInitialized}
             sx={{ height: 60, width: '100%', fontSize: '1.2rem', borderRadius: 3 }}
           >
             {isCapturing ? '停止捕获' : '开始捕获'}
@@ -205,6 +200,8 @@ export default function SensorCapturePage() {
             </CardContent>
           </Card>
         )}
+
+        <LoggerPanel />
       </Container>
     </ThemeProvider>
   );
