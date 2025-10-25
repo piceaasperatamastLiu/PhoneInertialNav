@@ -39,6 +39,13 @@ export default function SensorCapturePage() {
   const [collector, setCollector] = useState<Collector | null>(null);
   const [settings, setSettings] = useState<SensorSettings>(DEFAULT_SETTINGS);
 
+
+  fetch("https://phoneinertialnav-server.vercel.app/api/data")
+    .then(res => res.json())
+    .then(res => console.log(res))
+    .catch(err => console.error("Fetch error:", err));
+
+
   const initializeSensor = async () => {
     try {
       const newCollector = new Collector(settings);
