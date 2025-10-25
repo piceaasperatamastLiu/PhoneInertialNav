@@ -12,6 +12,7 @@ import { CloudDownload, PlayArrow, Stop } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 import LoggerPanel from './LoggerPanel';
+import SettingsPanel, { DEFAULT_SETTINGS, type SensorSettings } from './SettingsPanel';
 import { Collector, type SensorData, type InitStatus } from './collector';
 
 const theme = createTheme({
@@ -36,6 +37,7 @@ export default function SensorCapturePage() {
   const [sensorData, setSensorData] = useState<SensorData[]>([]);
   const [initStatus, setInitStatus] = useState<InitStatus | null>(null);
   const [collector, setCollector] = useState<Collector | null>(null);
+  const [settings, setSettings] = useState<SensorSettings>(DEFAULT_SETTINGS);
 
   const initializeSensor = async () => {
     try {
@@ -167,6 +169,13 @@ export default function SensorCapturePage() {
             {isCapturing && <Typography variant="h5">{formatTime(captureTime)}</Typography>}
           </CardContent>
         </Card>
+
+        <SettingsPanel
+          settings={settings}
+          onSettingsChange={(newSettings) => {
+            setSettings(newSettings);
+          }}
+        />
 
         <Box sx={{ width: '100%', maxWidth: 400, margin: '16px 0', display: 'flex', justifyContent: 'center' }}>
           <Button

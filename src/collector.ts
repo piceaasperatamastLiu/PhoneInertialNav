@@ -9,7 +9,6 @@ export type SensorData = {
 type IMSensors = {
     accelerometer?: LinearAccelerationSensor;
     gyroscope?: Gyroscope;
-    magnetometer?: Magnetometer;
 };
 
 export type InitStatus = 'success' | 'not-supported' | 'error';
@@ -25,7 +24,6 @@ export class Collector {
             if (navigator.permissions) {
                 await navigator.permissions.query({ name: 'accelerometer' } as any);
                 await navigator.permissions.query({ name: 'gyroscope' } as any);
-                await navigator.permissions.query({ name: 'magnetometer' } as any);
             }
 
             if (!('LinearAccelerationSensor' in window)) {
@@ -36,14 +34,9 @@ export class Collector {
                 console.warn('当前浏览器不支持 Gyroscope');
                 return 'not-supported';
             }
-            if (!('Magnetometer' in window)) {
-                console.warn('当前浏览器不支持 Gyroscope');
-                return 'not-supported';
-            }
 
             this.sensors.accelerometer = new LinearAccelerationSensor({ frequency: 60 });
             this.sensors.gyroscope = new Gyroscope({ frequency: 60 });
-            this.sensors.magnetometer = new Magnetometer({ frequency: 60 });
 
             this.sensors.accelerometer.addEventListener('reading', this.updateData.bind(this));
 
