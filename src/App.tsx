@@ -11,9 +11,9 @@ import {
 import { CloudDownload, PlayArrow, Stop } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-import LoggerPanel from '../components/LoggerPanel';
-import SettingsPanel from '../components/SettingsPanel';
-import { Collector, type SensorData, type InitStatus, type SensorSettings, DEFAULT_SETTINGS } from '../collector';
+import LoggerPanel from './LoggerPanel';
+import SettingsPanel, { DEFAULT_SETTINGS, type SensorSettings } from './SettingsPanel';
+import { Collector, type SensorData, type InitStatus } from './collector';
 
 const theme = createTheme({
   palette: {
@@ -48,7 +48,7 @@ export default function SensorCapturePage() {
 
   const initializeSensor = async () => {
     try {
-      const newCollector = new Collector(settings);
+      const newCollector = new Collector();
       const status = await newCollector.init();
 
       setInitStatus(status);

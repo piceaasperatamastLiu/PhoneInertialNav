@@ -1,34 +1,22 @@
 // src/collector.ts
 
-export interface SensorSettings {
-    frequency: number;
-    removeGravity: boolean;
-}
-
-// 默认设置值
-export const DEFAULT_SETTINGS: SensorSettings = {
-    frequency: 60,
-    removeGravity: false,
-};
-
 export type SensorData = {
     acceleration: { x: number; y: number; z: number };
-    angularVelocity: { x: number; y: number; z: number };
+    rotation: { x: number; y: number; z: number };
     timestamp: number;
 };
 
 type IMSensors = {
-    accelerometer?: Accelerometer | LinearAccelerationSensor;
+    accelerometer?: LinearAccelerationSensor;
     gyroscope?: Gyroscope;
 };
 
 export type InitStatus = 'success' | 'not-supported' | 'error';
 
 export class Collector {
-    constructor(sensorSettings: SensorSettings) {
+    constructor() {
         this.sensors = {};
         this.sensorData = [];
-        this.sensorSettings = sensorSettings;
     }
 
     async init(): Promise<InitStatus> {
@@ -38,30 +26,19 @@ export class Collector {
                 await navigator.permissions.query({ name: 'gyroscope' } as any);
             }
 
-            if (this.sensorSettings.removeGravity) {
-                if (!('Accelerometer' in window)) {
-                    console.warn('当前浏览器不支持 Accelerometer');
-                    return 'not-supported';
-                }
-            } else {
-                if (!('LinearAccelerationSensor' in window)) {
-                    console.warn('当前浏览器不支持 Accelerometer');
-                    return 'not-supported';
-                }
+            if (!('LinearAccelerationSensor' in window)) {
+                console.warn('当前浏览器不支持 Accelerometer');
+                return 'not-supported';
             }
             if (!('Gyroscope' in window)) {
                 console.warn('当前浏览器不支持 Gyroscope');
                 return 'not-supported';
             }
 
-            if (this.sensorSettings.removeGravity) {
-                this.sensors.accelerometer = new LinearAccelerationSensor({ frequency: this.sensorSettings.frequency });
-            } else {
-                this.sensors.accelerometer = new Accelerometer({ frequency: this.sensorSettings.frequency });
-            }
-            this.sensors.gyroscope = new Gyroscope({ frequency: this.sensorSettings.frequency });
+            this.sensors.accelerometer = new LinearAccelerationSensor({ frequency: 60 });
+            this.sensors.gyroscope = new Gyroscope({ frequency: 60 });
 
-            this.sensors.gyroscope.addEventListener('reading', this.updateData.bind(this));
+            this.sensors.accelerometer.addEventListener('reading', this.updateData.bind(this));
 
             if (this.sensors.accelerometer &&
                 this.sensors.gyroscope) {
@@ -86,7 +63,7 @@ export class Collector {
                     y: acc.y ?? 0,
                     z: acc.z ?? 0,
                 },
-                angularVelocity: {
+                rotation: {
                     x: gyro.x ?? 0,
                     y: gyro.y ?? 0,
                     z: gyro.z ?? 0,
@@ -126,5 +103,4 @@ export class Collector {
 
     private sensors: IMSensors;
     private sensorData: SensorData[];
-    private sensorSettings: SensorSettings;
 }
