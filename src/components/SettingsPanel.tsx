@@ -14,22 +14,12 @@ import {
     IconButton
 } from '@mui/material';
 import { ExpandMore, ExpandLess } from '@mui/icons-material';
-
-export interface SensorSettings {
-    frequency: number;
-    removeGravity: boolean;
-}
+import type { SensorSettings } from '../collector';
 
 interface SettingsPanelProps {
     settings: SensorSettings;
     onSettingsChange: (newSettings: SensorSettings) => void;
 }
-
-// 默认设置值
-export const DEFAULT_SETTINGS: SensorSettings = {
-    frequency: 60,
-    removeGravity: false,
-};
 
 export default function SettingsPanel({
     settings,
